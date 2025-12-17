@@ -489,6 +489,7 @@ function addSelectedSubscriptions() {
       id: Date.now().toString() + Math.random().toString(36).slice(2),
       name: cleanSubscriptionName(sub.name),
       price: sub.price,
+      currency: selectedCurrency,
       cycle: sub.cycle,
       url: "",
       color: randColor().id

@@ -28,6 +28,9 @@ class Treemap {
         name: item.name,
         url: item.url,
         color: item.color,
+        price: item.price,
+        currency: item.currency,
+        cycle: item.cycle,
         cost: item.cost,
         val: item.val,
         idx: item.idx,
@@ -108,6 +111,9 @@ class Treemap {
           name: item.name,
           url: item.url,
           color: item.color,
+          price: item.price,
+          currency: item.currency,
+          cycle: item.cycle,
           cost: item.cost,
           val: item.val,
           idx: item.idx,
@@ -123,6 +129,9 @@ class Treemap {
           name: item.name,
           url: item.url,
           color: item.color,
+          price: item.price,
+          currency: item.currency,
+          cycle: item.cycle,
           cost: item.cost,
           val: item.val,
           idx: item.idx,
@@ -164,6 +173,7 @@ function renderGrid() {
       url: sub.url,
       color: sub.color,
       price: sub.price,
+      currency: sub.currency,
       cycle: sub.cycle,
       cost: monthlyCost
     });
@@ -190,6 +200,9 @@ function renderGrid() {
       name: items[i].name,
       url: items[i].url,
       color: items[i].color,
+      price: items[i].price,
+      currency: items[i].currency,
+      cycle: items[i].cycle,
       cost: items[i].cost,
       val: items[i].cost,
       idx: i
@@ -236,7 +249,7 @@ function renderGrid() {
       const ps = Math.max(9, Math.min(priceFont, 13, innerWidth * 0.16));
       cellContent = '<div class="flex flex-col items-center justify-center h-full w-full gap-1">';
       cellContent += iconHtml(cell, "w-[" + sz + "px] h-[" + sz + "px]");
-      cellContent += '<div class="font-bold text-slate-900" style="font-size:' + ps + 'px">' + formatCurrencyShort(cell.cost) + '</div>';
+      cellContent += '<div class="font-bold text-slate-900" style="font-size:' + ps + 'px">' + formatOriginalMonthlyShort(cell) + '</div>';
       cellContent += '</div>';
 
     } else if (isSmall) {
@@ -248,7 +261,7 @@ function renderGrid() {
       cellContent += iconHtml(cell, "w-[" + sz + "px] h-[" + sz + "px]");
       cellContent += '<div class="min-w-0 w-full">';
       cellContent += '<div class="font-semibold text-slate-900 treemap-cell-name" style="font-size:' + ts + 'px">' + cell.name + '</div>';
-      cellContent += '<div class="font-black text-slate-900" style="font-size:' + ps + 'px">' + formatCurrencyShort(cell.cost) + '</div>';
+      cellContent += '<div class="font-black text-slate-900" style="font-size:' + ps + 'px">' + formatOriginalMonthlyShort(cell) + '</div>';
       cellContent += '</div></div>';
 
     } else {
@@ -263,9 +276,9 @@ function renderGrid() {
       cellContent += '</div>';
       cellContent += '<div class="mt-auto min-w-0">';
       cellContent += '<div class="font-bold text-slate-900 treemap-cell-name" style="font-size:' + titleFont + 'px">' + cell.name + '</div>';
-      cellContent += '<div class="font-black text-slate-900 tracking-tight leading-none" style="font-size:' + priceFont + 'px">' + formatCurrency(cell.cost) + '</div>';
+      cellContent += '<div class="font-black text-slate-900 tracking-tight leading-none" style="font-size:' + priceFont + 'px">' + formatOriginalMonthly(cell) + '</div>';
       if (showYearlyEstimate) {
-        cellContent += '<div class="text-xs font-medium text-slate-500 mt-1">~' + formatCurrencyShort(cell.cost * 12) + '/yr</div>';
+        cellContent += '<div class="text-xs font-medium text-slate-500 mt-1">~' + formatOriginalYearlyShort(cell) + '/yr</div>';
       }
       cellContent += '</div>';
     }

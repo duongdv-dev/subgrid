@@ -96,13 +96,13 @@ function importData(evt) {
       if (replaceExisting || subs.length === 0) {
         subs = data.subscriptions;
       } else {
-        // merge - give imported items new ids to avoid conflicts
         for (let i = 0; i < data.subscriptions.length; i++) {
           const imported = data.subscriptions[i];
           subs.push({
             id: Date.now().toString() + Math.random().toString(36).slice(2),
             name: imported.name,
             price: imported.price,
+            currency: imported.currency || selectedCurrency || "USD",
             cycle: imported.cycle,
             url: imported.url || "",
             color: imported.color

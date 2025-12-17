@@ -461,20 +461,35 @@
             <div>
               <label
                 class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500"
-                >Cycle</label
+                >Currency</label
               >
-              <select
-                id="cycle"
-                class="block w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-base font-semibold text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
-              >
-                <option value="Monthly">Monthly</option>
-                <option value="Yearly">Yearly</option>
-                <option value="Weekly">Weekly</option>
-              </select>
+              <div class="relative">
+                <select
+                  id="sub-currency"
+                  class="block w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-base font-semibold text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                ></select>
+                <span
+                  class="iconify pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                  data-icon="ph:caret-down-bold"
+                ></span>
+              </div>
             </div>
           </div>
 
-          <input type="hidden" id="currency" value="USD" />
+          <div>
+            <label
+              class="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-500"
+              >Cycle</label
+            >
+            <select
+              id="cycle"
+              class="block w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-base font-semibold text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="Monthly">Monthly</option>
+              <option value="Yearly">Yearly</option>
+              <option value="Weekly">Weekly</option>
+            </select>
+          </div>
           <input type="hidden" id="date" value="" />
 
           <div>

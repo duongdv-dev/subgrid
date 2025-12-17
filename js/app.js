@@ -74,30 +74,95 @@ function getColor(colorId) {
   return found ? found : randColor();
 }
 
-function formatCurrency(usdAmount, decimals = 2) {
+const currencyLocales = {
+  USD: "en-US", EUR: "de-DE", GBP: "en-GB", JPY: "ja-JP", CNY: "zh-CN",
+  KRW: "ko-KR", INR: "en-IN", CAD: "en-CA", AUD: "en-AU", CHF: "de-CH",
+  HKD: "zh-HK", SGD: "en-SG", SEK: "sv-SE", NOK: "nb-NO", DKK: "da-DK",
+  NZD: "en-NZ", MXN: "es-MX", BRL: "pt-BR", ZAR: "en-ZA", RUB: "ru-RU",
+  TRY: "tr-TR", PLN: "pl-PL", THB: "th-TH", IDR: "id-ID", MYR: "ms-MY",
+  PHP: "en-PH", VND: "vi-VN", TWD: "zh-TW", AED: "ar-AE", SAR: "ar-SA",
+  ILS: "he-IL", CZK: "cs-CZ", HUF: "hu-HU", RON: "ro-RO", BGN: "bg-BG",
+  HRK: "hr-HR", CLP: "es-CL", COP: "es-CO", ARS: "es-AR", PEN: "es-PE",
+  EGP: "ar-EG", NGN: "en-NG", KES: "en-KE", PKR: "en-PK", BDT: "bn-BD",
+  UAH: "uk-UA"
+};
+
+function convertToBase(amount, fromCurrency) {
+  const from = currencies[fromCurrency] || currencies.USD;
+  const to = currencies[selectedCurrency];
+  const usdAmount = amount / from.rate;
+  return usdAmount * to.rate;
+}
+
+function formatNum(amount, decimals, currencyCode) {
+  const locale = currencyLocales[currencyCode] || "en-US";
+  return amount.toLocaleString(locale, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
+
+function formatCurrency(baseAmount, decimals = 2) {
   const curr = currencies[selectedCurrency];
-  const converted = usdAmount * curr.rate;
-  // skip decimals for currencies like JPY, KRW where it looks weird
   const dec = curr.rate > 100 ? 0 : decimals;
-  return curr.symbol + converted.toFixed(dec);
+  return curr.symbol + formatNum(baseAmount, dec, selectedCurrency);
 }
 
-// compact format for tight spaces in the treemap
-function formatCurrencyShort(usdAmount) {
+function formatCurrencyShort(baseAmount) {
   const curr = currencies[selectedCurrency];
-  const amt = usdAmount * curr.rate;
-
-  if (amt >= 1_000_000) return curr.symbol + (amt / 1_000_000).toFixed(1) + "M";
-  if (amt >= 10_000) return curr.symbol + (amt / 1_000).toFixed(0) + "k";
-  if (curr.rate > 100) return curr.symbol + Math.round(amt);
-  return curr.symbol + amt.toFixed(0);
+  if (baseAmount >= 1_000_000) return curr.symbol + (baseAmount / 1_000_000).toFixed(1) + "M";
+  if (baseAmount >= 10_000) return curr.symbol + (baseAmount / 1_000).toFixed(0) + "k";
+  if (curr.rate > 100) return curr.symbol + formatNum(Math.round(baseAmount), 0, selectedCurrency);
+  return curr.symbol + formatNum(baseAmount, 0, selectedCurrency);
 }
 
-// normalize everything to monthly for comparison
+function formatOriginalPrice(sub) {
+  const code = sub.currency || selectedCurrency || "USD";
+  const curr = currencies[code] || currencies.USD;
+  const dec = curr.rate > 100 ? 0 : 2;
+  return curr.symbol + formatNum(sub.price, dec, code);
+}
+
+function formatOriginalMonthly(sub) {
+  const code = sub.currency || selectedCurrency || "USD";
+  const curr = currencies[code] || currencies.USD;
+  let monthly = sub.price;
+  if (sub.cycle === "Yearly") monthly = sub.price / 12;
+  if (sub.cycle === "Weekly") monthly = sub.price * 4.33;
+  const dec = curr.rate > 100 ? 0 : 2;
+  return curr.symbol + formatNum(monthly, dec, code);
+}
+
+function formatOriginalMonthlyShort(sub) {
+  const code = sub.currency || selectedCurrency || "USD";
+  const curr = currencies[code] || currencies.USD;
+  let monthly = sub.price;
+  if (sub.cycle === "Yearly") monthly = sub.price / 12;
+  if (sub.cycle === "Weekly") monthly = sub.price * 4.33;
+  if (monthly >= 1_000_000) return curr.symbol + (monthly / 1_000_000).toFixed(1) + "M";
+  if (monthly >= 10_000) return curr.symbol + (monthly / 1_000).toFixed(0) + "k";
+  if (curr.rate > 100) return curr.symbol + formatNum(Math.round(monthly), 0, code);
+  return curr.symbol + formatNum(monthly, 0, code);
+}
+
+function formatOriginalYearlyShort(sub) {
+  const code = sub.currency || selectedCurrency || "USD";
+  const curr = currencies[code] || currencies.USD;
+  let yearly = sub.price * 12;
+  if (sub.cycle === "Yearly") yearly = sub.price;
+  if (sub.cycle === "Weekly") yearly = sub.price * 52;
+  if (yearly >= 1_000_000) return curr.symbol + (yearly / 1_000_000).toFixed(1) + "M";
+  if (yearly >= 10_000) return curr.symbol + (yearly / 1_000).toFixed(0) + "k";
+  if (curr.rate > 100) return curr.symbol + formatNum(Math.round(yearly), 0, code);
+  return curr.symbol + formatNum(yearly, 0, code);
+}
+
 function toMonthly(sub) {
-  if (sub.cycle === "Yearly") return sub.price / 12;
-  if (sub.cycle === "Weekly") return sub.price * 4.33; // ~4.33 weeks per month
-  return sub.price;
+  const subCurrency = sub.currency || selectedCurrency || "USD";
+  let monthly = sub.price;
+  if (sub.cycle === "Yearly") monthly = sub.price / 12;
+  if (sub.cycle === "Weekly") monthly = sub.price * 4.33;
+  return convertToBase(monthly, subCurrency);
 }
 
 function iconHtml(sub, className) {
@@ -171,7 +236,7 @@ function renderList() {
     html += iconHtml(sub, "w-10 h-10");
     html += '<div class="min-w-0">';
     html += '<div class="font-bold text-slate-900 truncate">' + sub.name + '</div>';
-    html += '<div class="text-xs text-slate-500">' + formatCurrency(sub.price) + ' / ' + sub.cycle + '</div>';
+    html += '<div class="text-xs text-slate-500">' + formatOriginalPrice(sub) + ' / ' + sub.cycle + '</div>';
     html += '</div></div>';
     html += '<div class="flex items-center gap-1">';
     html += '<button onclick="editSub(\'' + sub.id + '\')" class="text-slate-300 hover:text-indigo-500 p-2"><span class="iconify" data-icon="ph:pencil-simple-bold"></span></button>';
@@ -246,6 +311,7 @@ function getVexlyImportUrl() {
     subscriptions: subs.map(sub => ({
       name: sub.name,
       price: sub.price,
+      currency: sub.currency || selectedCurrency || "USD",
       cycle: sub.cycle.toLowerCase(),
       ...(sub.url && {
         url: sub.url.startsWith("http") ? sub.url : "https://" + sub.url
@@ -297,6 +363,7 @@ function editSub(subId) {
   document.getElementById("entry-id").value = sub.id;
   document.getElementById("name").value = sub.name;
   document.getElementById("price").value = sub.price;
+  document.getElementById("sub-currency").value = sub.currency || selectedCurrency;
   document.getElementById("cycle").value = sub.cycle;
   document.getElementById("url").value = sub.url || "";
 
@@ -378,6 +445,23 @@ function initCurrencySelector() {
   });
 }
 
+function initFormCurrencySelector() {
+  const dropdown = document.getElementById("sub-currency");
+  if (!dropdown) return;
+
+  let html = "";
+  const currencyCodes = Object.keys(currencies);
+
+  for (let i = 0; i < currencyCodes.length; i++) {
+    const code = currencyCodes[i];
+    const curr = currencies[code];
+    html += '<option value="' + code + '">' + curr.symbol + ' ' + code + '</option>';
+  }
+
+  dropdown.innerHTML = html;
+  dropdown.value = selectedCurrency;
+}
+
 function handleFormSubmit(evt) {
   evt.preventDefault();
 
@@ -387,6 +471,7 @@ function handleFormSubmit(evt) {
     id: existingId || Date.now().toString(),
     name: document.getElementById("name").value,
     price: parseFloat(document.getElementById("price").value),
+    currency: document.getElementById("sub-currency").value,
     cycle: document.getElementById("cycle").value,
     url: document.getElementById("url").value,
     color: document.getElementById("selected-color").value || randColor().id
@@ -411,6 +496,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadCurrency();
   initColorPicker();
   initCurrencySelector();
+  initFormCurrencySelector();
   renderPresets();
   renderList();
   document.getElementById("date").value = new Date().toISOString().split("T")[0];
